@@ -3,7 +3,6 @@ import 'package:get_it/get_it.dart';
 import 'package:multiple_stream_builder/multiple_stream_builder.dart';
 
 import '../../business/bloc.dart';
-import '../../business/functions.dart';
 import '../../data/services.dart';
 
 class BlocScreen extends StatefulWidget {

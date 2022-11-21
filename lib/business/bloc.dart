@@ -32,6 +32,12 @@ class SimpleBloc {
   StreamSink<String> get buttonAction => _buttonInputEventController.sink;
   Stream<bool> get buttonState => _buttonOutputStateController.stream;
 
+  // Очищение списка
+  final _clearListInputEventController = StreamController();
+  final _clearListOutputStateController = StreamController();
+  StreamSink get clearListAction => _clearListInputEventController.sink;
+  Stream get clearListState => _clearListOutputStateController.stream;
+
   void _getCount(void v) async {
     _countOutputStateController.sink.add(GetIt.I.get<Basket>().basket.length);
   }
@@ -60,11 +66,21 @@ class SimpleBloc {
     _buttonOutputStateController.sink.add(get);
   }
 
+  void _clearList(void v) async {
+    GetIt.I.get<Basket>().basket.clear();
+    GetIt.I.get<Basket>().select.updateAll((key, value) => value = false);
+    _clearListOutputStateController.sink;
+    _buttonOutputStateController.sink.add(false);
+    _getCount(null);
+    _getList(null);
+  }
+
   SimpleBloc() {
     _countInputEventController.stream.listen(_getCount);
     _listInputEventController.stream.listen(_getList);
     _elementInputEventController.stream.listen(_updateElementInBasket);
     _buttonInputEventController.stream.listen(_updateButton);
+    _clearListInputEventController.stream.listen(_clearList);
   }
 
   void dispose() {
@@ -72,9 +88,11 @@ class SimpleBloc {
     _listInputEventController.close();
     _elementInputEventController.close();
     _buttonInputEventController.close();
+    _clearListInputEventController.close();
     _countOutputStateController.close();
     _listOutputStateController.close();
     _elementOutputStateController.close();
     _buttonOutputStateController.close();
+    _clearListOutputStateController.close();
   }
 }

@@ -119,6 +119,13 @@ class _TestState extends State<BlocScreen> {
               }
             }),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          bloc.clearListAction.add(null);
+        },
+        child: const Icon(Icons.clear),
+      ),
     );
   }
 }

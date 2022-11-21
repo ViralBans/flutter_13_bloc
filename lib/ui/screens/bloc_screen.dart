@@ -3,6 +3,7 @@ import 'package:get_it/get_it.dart';
 import 'package:multiple_stream_builder/multiple_stream_builder.dart';
 
 import '../../business/bloc.dart';
+import '../../business/functions.dart';
 import '../../data/services.dart';
 
 class BlocScreen extends StatefulWidget {
@@ -13,11 +14,12 @@ class BlocScreen extends StatefulWidget {
 }
 
 class _TestState extends State<BlocScreen> {
-  SimpleBloc bloc = SimpleBloc();
+  late SimpleBloc bloc;
 
   @override
   void initState() {
     super.initState();
+    bloc = SimpleBloc();
     bloc.countAction.add(null);
     bloc.listAction.add(null);
   }
@@ -30,25 +32,20 @@ class _TestState extends State<BlocScreen> {
 
   @override
   Widget build(BuildContext context) {
-    bool isSelected = false;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('BloC'),
       ),
       body: SafeArea(
-        child: FutureBuilder(
-          future: GetIt.I.get<DataNetwork>().getFruitList(),
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.waiting:
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              case ConnectionState.done:
-                return Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
+        child: StreamBuilder3(
+            streams: StreamTuple3(GetIt.I.get<DataNetwork>().getData(),
+                bloc.elementState, bloc.buttonState),
+            builder: (context, snapshots) {
+              switch (snapshots.snapshot1.connectionState) {
+                case ConnectionState.waiting:
+                  return const Center(child: CircularProgressIndicator());
+                case ConnectionState.done:
+                  return Column(
                     children: [
                       StreamBuilder2(
                           streams:
@@ -80,61 +77,47 @@ class _TestState extends State<BlocScreen> {
                               ),
                             );
                           }),
-                      StreamBuilder(
-                        stream: bloc.elementState,
-                        builder: (context, snapshot3) {
-                          return Expanded(
-                            child: ListView(
-                              children: GetIt.I.get<DataNetwork>().fl.map(
-                                    (element) {
-                                  return Card(
-                                    child: ListTile(
-                                      title: Text(element.name),
-                                      subtitle: Text('Цена: ${element.cost} руб.'),
-                                      trailing: isSelected
-                                          ? TextButton(
-                                        onPressed: () {
-                                          bloc.elementAction
-                                              .add(element.name);
-                                          bloc.countAction.add(null);
-                                          bloc.listAction.add(null);
-                                          isSelected = false;
-                                        },
-                                        child: const Text(
-                                          'Удалить',
-                                          style: TextStyle(color: Colors.red),
-                                        ),
-                                      )
-                                          : TextButton(
-                                        onPressed: () {
-                                          bloc.elementAction
-                                              .add(element.name);
-                                          bloc.countAction.add(null);
-                                          bloc.listAction.add(null);
-                                          isSelected = true;
-                                        },
-                                        child: const Text(
-                                          'Добавить',
-                                          style:
-                                          TextStyle(color: Colors.green),
-                                        ),
-                                      ),
-                                    ),
-                                  );
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: snapshots.snapshot1.data?.length,
+                          itemBuilder: (context, index) => Card(
+                            child: ListTile(
+                              title:
+                                  Text(snapshots.snapshot1.data![index].name),
+                              subtitle: Text(
+                                  'Цена: ${snapshots.snapshot1.data![index].cost} руб.'),
+                              trailing: TextButton(
+                                onPressed: () async {
+                                  bloc.elementAction.add(
+                                      snapshots.snapshot1.data![index].name);
+                                  bloc.buttonAction.add(
+                                      snapshots.snapshot1.data![index].name);
+                                  bloc.countAction.add(null);
+                                  bloc.listAction.add(null);
                                 },
-                              ).toList(),
+                                child: (GetIt.I.get<Basket>().select[snapshots
+                                            .snapshot1.data![index].name
+                                            .toString()] ??
+                                        false)
+                                    ? const Text(
+                                        'Удалить',
+                                        style: TextStyle(color: Colors.red),
+                                      )
+                                    : const Text(
+                                        'Добавить',
+                                        style: TextStyle(color: Colors.green),
+                                      ),
+                              ),
                             ),
-                          );
-            }
+                          ),
+                        ),
                       ),
                     ],
-                  ),
-                );
-              default:
-                return const Center(child: Text('Нет данных с сервера!'));
-            }
-          },
-        ),
+                  );
+                default:
+                  return const Text('Ошибка загрузки данных!');
+              }
+            }),
       ),
     );
   }
